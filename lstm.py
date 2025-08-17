@@ -1,27 +1,27 @@
 import torch.nn as nn
-import torch.tensor as tensor
+import torch
 
-x = "asdfasfaf" \
-    "fas"
+
+
 
 class LSTM(nn.Module):
 
-    def __init__(self):
+    def __init__(self, input_dims, hidden_size):
 
         super().__init__()
 
-        self.h = None
-        self.C = None
+        self.h = torch.randn(hidden_size)
+        self.C = nn.Parameter()
 
-        self.W_fh = nn.Parameter()
-        self.W_fi = nn.Parameter()
-        self.b_fh = nn.Parameter()
-        self.b_fi = nn.Parameter()
+        self.W_fh = torch.randn(hidden_size)
+        self.W_fi = torch.randn(hidden_size)
+        self.b_fh = torch.randn()
+        self.b_fi = torch.randn()
 
-        self.W_ih = nn.Parameter()
-        self.W_ii = nn.Parameter()
-        self.b_ih = nn.Parameter()
-        self.b_ii = nn.Parameter()
+        self.W_ih = torch.randn(hidden_size)
+        self.W_ii = torch.randn(hidden_size)
+        self.b_ih = torch.randn()
+        self.b_ii = torch.randn()
 
         self.W_Ca_t_h = nn.Parameter()
         self.W_Ca_t_i = nn.Parameter()
@@ -34,18 +34,41 @@ class LSTM(nn.Module):
         self.b_oi = nn.Parameter()
 
     def forward(self, x):
-        f_t = nn.Sigmoid(self.W_fh*self.h + self.b_fh +
+        forget_gate = nn.Sigmoid(self.W_fh*self.h + self.b_fh +
                          self.W_fi*x + self.b_fi)
 
-        i_t = nn.Sigmoid(self.W_ih*self.h + self.b_ih +
+        input_gate = nn.Sigmoid(self.W_ih*self.h + self.b_ih +
                          self.W_ii*x + self.b_ii)
         C_add_t = nn.Tanh(self.W_Ca_t_h*self.h + self.b_Ca_t_h +
                           self.W_Ca_t_i*x + self.b_Ca_t_i)
-        self.C = f_t * self.C + i_t * C_add_t
+        self.C = forget_gate * self.C + input_gate * C_add_t
 
-        o_t = nn.Sigmoid(self.W_oh*self.h + self.b_oh +
+        output_gate = nn.Sigmoid(self.W_oh*self.h + self.b_oh +
                          self.W_oi*x + self.b_oi)
 
-        self.h = nn.Tanh(self.C) * o_t
+        self.h = nn.Tanh(self.C) * output_gate
 
         return self.h
+
+
+class LSTMNet(nn.Module):
+
+    def __init__(self, input_dims):
+        super().__init__()
+
+        self.lstm_1 = LSTM(input_dims)
+        self.lstm_2 = LSTM(input_dims)
+        self.lstm_3 = LSTM(input_dims)
+
+        self.decoder = nn.Linear(1, input_dims)
+
+    def forward(self, x):
+        """
+
+        :param x:
+        :return:
+        """
+        h_1 = self.lstm_1.forward(x)
+        h_2 = self.lstm_2.forward(h_1)
+
+        return nn.Softmax(self.decoder(h_2))
