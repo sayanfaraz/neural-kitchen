@@ -106,5 +106,7 @@ venv.bak/
 # PyCharm
 .idea/
 
-# Data
+# Data, outputs, etc
 data/
+outputs/
+recipes_raw.zip
